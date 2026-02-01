@@ -1,0 +1,27 @@
+plugins {
+    // We define the versions here but don't "apply" them to the root
+    id 'org.springframework.boot' version '3.3.5' apply false
+    id 'io.spring.dependency-management' version '1.1.7' apply false
+    id 'java'
+}
+
+allprojects {
+    group = 'com.gymcrm'
+    version = '0.0.1-SNAPSHOT'
+
+    repositories {
+        mavenCentral()
+    }
+
+    allprojects {
+        tasks.configureEach {
+            if (name == "prepareKotlinBuildScriptModel") {
+                // Already exists, do nothing
+            }
+        }
+
+        if (!tasks.names.contains("prepareKotlinBuildScriptModel")) {
+            tasks.register("prepareKotlinBuildScriptModel") {}
+        }
+    }
+}

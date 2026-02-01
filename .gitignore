@@ -1,0 +1,63 @@
+# ===== Java =====
+*.class
+*.log
+hs_err_pid*
+replay_pid*
+
+# Artifacts
+*.jar
+*.war
+*.ear
+
+# ===== Gradle =====
+.gradle/
+**/.gradle/
+build/
+**/build/
+out/
+target/
+
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/**
+
+# ===== IDE =====
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+
+# ===== ЛОКАЛЬНАЯ БД (вот это тебе точно не нужно в репо) =====
+*.db
+*.lock.db
+*.trace.db
+**/data/*.db
+**/data/*.lock.db
+**/data/*.trace.db
+
+# ===== Docker и локальное окружение =====
+docker-compose.override.yml
+.env
+.env.*
+.env.*.local
+
+# ===== Logs =====
+logs/
+*.out
+
+# ===== OS мусор =====
+.DS_Store
+Thumbs.db
+Desktop.ini
+*~
+*.bak
+*.old
+*.orig
+
+# ===== Test results =====
+test-results/
+**/test-results/
+
+# ===== H2 database =====
+gym-crm-core-service/data/
+**/data/*.mv.db

@@ -1,0 +1,74 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.5'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.gymcrm'
+version = '0.0.1-SNAPSHOT'
+description = 'integration tests – components + e2e tests'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.testcontainers:testcontainers-bom:1.19.3"
+    }
+}
+
+dependencies {
+
+    // 1. Spring Cloud & Testcontainers BOMs
+    implementation platform("org.springframework.cloud:spring-cloud-dependencies:2023.0.3")
+    testImplementation platform('org.testcontainers:testcontainers-bom:1.19.3')
+
+    // 2. The critical fix for "cannot access TestRule"
+    // Vintage allows JUnit 5 to see JUnit 4 classes used by Testcontainers
+    testImplementation 'org.junit.vintage:junit-vintage-engine'
+    testImplementation 'junit:junit:4.13.2'
+
+    // 3. Project Modules
+    testImplementation project(':gym-crm-core-service')
+    testImplementation project(':trainer-workload-service')
+
+    // 4. Spring Boot Starters
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+    testImplementation 'org.springframework.boot:spring-boot-starter-activemq'
+    testImplementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // 5. Cucumber
+    testImplementation 'io.cucumber:cucumber-java:7.15.0'
+    testImplementation 'io.cucumber:cucumber-spring:7.15.0'
+    testImplementation 'io.cucumber:cucumber-junit-platform-engine:7.15.0'
+    testImplementation 'org.junit.platform:junit-platform-suite'
+
+    // 6. Testcontainers
+    testImplementation 'org.testcontainers:testcontainers'
+    testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'org.testcontainers:mongodb'
+    testImplementation 'org.testcontainers:junit-jupiter'
+
+    // 7. Testing Utils
+    testImplementation 'io.rest-assured:rest-assured:5.4.0'
+    testImplementation 'org.awaitility:awaitility:4.2.0'
+}
+
+test {
+    useJUnitPlatform()
+    systemProperty "cucumber.junit-platform.naming-strategy", "long"
+}

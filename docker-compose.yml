@@ -1,0 +1,123 @@
+services:
+  # === Postgres Database ===
+  postgres:
+    image: postgres:15
+    container_name: gymcrm-postgres
+    environment:
+      POSTGRES_DB: gymcrm
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5439:5432"
+    networks:
+      - gymcrm-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    networks:
+      - gymcrm-network
+
+  # === ActiveMQ ===
+  activemq:
+    image: rmohr/activemq
+    container_name: activemq
+    ports:
+      - "61616:61616"
+      - "8161:8161"
+    networks:
+      - gymcrm-network
+    environment:
+      ACTIVEMQ_ADMIN_LOGIN: admin
+      ACTIVEMQ_ADMIN_PASSWORD: admin
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8161/ || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 60s
+    restart: on-failure
+
+  # === Eureka Discovery Service ===
+  eureka-server:
+    build:
+      context: ./gym-crm-discovery
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - gymcrm-network
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+    healthcheck:
+      test: [ "CMD", "wget", "-qO-", "http://localhost:8761/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+  # === Gym CRM Core Service ===
+  gym-crm-service:
+    build:
+      context: ./gym-crm-core-service
+    container_name: gym-crm-core-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      activemq:
+        condition: service_healthy
+    networks:
+      - gymcrm-network
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/gymcrm
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      spring.activemq.broker-url: tcp://activemq:61616
+      spring.activemq.user: admin
+      spring.activemq.password: admin
+      spring.activemq.packages.trust-all: true
+    restart: on-failure
+
+  # === Trainer Workload Service ===
+  trainer-workload-service:
+    build:
+      context: ./trainer-workload-service
+    container_name: trainer-workload-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      activemq:
+        condition: service_healthy
+    networks:
+      - gymcrm-network
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      spring.activemq.broker-url: tcp://activemq:61616
+      spring.activemq.user: admin
+      spring.activemq.password: admin
+      spring.activemq.packages.trust-all: true
+      trainer.workload.queue: trainer.workload.queue
+      trainer.workload.dlq: trainer.workload.dlq
+    restart: on-failure
+
+networks:
+  gymcrm-network:
+    driver: bridge

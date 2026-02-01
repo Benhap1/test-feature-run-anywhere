@@ -1,0 +1,4 @@
+rootProject.name = 'gymcrm-monorepo'
+include 'gym-crm-core-service'
+include 'trainer-workload-service'
+include 'integration-tests'
